@@ -13,15 +13,17 @@ exports.postAddProduct = (req, res, next) => {
   const imageUrl = req.body.imageUrl;
   const price = req.body.price;
   const description = req.body.description;
-  const product = new Product(null, title, imageUrl, description, price);
-  product
-    .save()
-    .then(() => {
-      res.redirect("/");
+  req.user
+    .createProduct({
+      title: title,
+      price: price,
+      description: description,
+      imageUrl: imageUrl,
     })
-    .catch((err) => {
-      console.log("error while adding product: " + err.message);
-    });
+    .then((res) => console.log("Product added successfully"));
+  res.redirect("/admin/add-product").catch((err) => {
+    console.log(err);
+  });
 };
 
 exports.getEditProduct = (req, res, next) => {
@@ -30,7 +32,8 @@ exports.getEditProduct = (req, res, next) => {
     return res.redirect("/");
   }
   const prodId = req.params.productId;
-  Product.findById(prodId, (product) => {
+  req.user.getProducts({ where: { id: prodId } }).then((products) => {
+    const product = products[0]; // assuming there's only one product with this id
     if (!product) {
       return res.redirect("/");
     }
@@ -70,6 +73,7 @@ exports.getProducts = (req, res, next) => {
   });
 };
 
+function fetchAll() {}
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
   Product.deleteById(prodId);
